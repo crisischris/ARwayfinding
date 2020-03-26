@@ -9,6 +9,7 @@ public class node : MonoBehaviour
     public node[] neighbers;
     public string name;
     public bool visited = false;
+    public GameObject parent;
 
     public GameObject user;
     public float dist;
@@ -17,6 +18,7 @@ public class node : MonoBehaviour
     void Start()
     {
         next = null;
+        parent = null;
     }
 
     void Update()

@@ -15,6 +15,7 @@ public class graphNode : MonoBehaviour
     public string desinationName;
     public List<GameObject> path = new List<GameObject>();
     public List<GameObject> dfs = new List<GameObject>();
+    public Queue<GameObject> bfs = new Queue<GameObject>();
 
     // Start is called before the first frame update
     void Start()
@@ -30,6 +31,9 @@ public class graphNode : MonoBehaviour
     void Update()
     {
         curMin = 100000;
+
+
+
         //find the nearst node
         for (int i = 0; i < graph.Length; i++)
         {
@@ -41,15 +45,11 @@ public class graphNode : MonoBehaviour
                 closestNode = curObject;
                 curMin = dist;
             }
-                
-            //curObject.SetActive(false);
         }
 
-        //closestNode.SetActive(true);
 
         //add objects to lineRenderer vertext list
         Vector3[] lrPos = new Vector3[path.Count];
-        //Debug.Log(lrPos.Length);
 
         for (int i = 0; i < path.Count; i++)
         {
@@ -60,13 +60,10 @@ public class graphNode : MonoBehaviour
         lr.positionCount = lrPos.Length;
         lr.SetPositions(lrPos);
 
-        //Debug.Log(closestNode.GetComponent<node>().name);
-
         // detect button click on 
         desinationName = interaction.GetComponent<buttonClick>().destination;
         if (desinationName != null)
         {
-          
             for (int i = 0; i < graph.Length; i++)
                 if (graph[i].GetComponent<node>().name == desinationName)
                     destination = graph[i].gameObject;
@@ -76,6 +73,7 @@ public class graphNode : MonoBehaviour
 
             //reset the string
             interaction.GetComponent<buttonClick>().setDestination();
+            interaction.GetComponent<buttonClick>().hideUI();
         }
 
 
@@ -85,57 +83,61 @@ public class graphNode : MonoBehaviour
     {
         //clear the path
         path.Clear();
-        dfs.Clear();
+        bfs.Clear();
 
         turnOffNodes();
 
         //starting node
-        dfs.Add(closestNode);
-        
-        while(dfs.Count > 0)
-        {
-                Debug.Log("in loop");
-                //if(dfs.Peek() == currNode)
-                GameObject topNode = dfs[dfs.Count - 1];
-                topNode.GetComponent<node>().visited = true;
+        bfs.Enqueue(closestNode);
+        GameObject top = null;
 
-                if (topNode == destination)
+        //if closest node is destination, no traversal need
+        if (closestNode == destination)
+        {
+            closestNode.GetComponent<MeshRenderer>().enabled = true;
+            path.Add(closestNode);
+        }
+        else
+        {
+            while (bfs.Count > 0)
+            {
+                top = bfs.Dequeue();
+                top.GetComponent<node>().visited = true;
+
+                if (top == destination)
                     break;
 
-                for (int i = 0; i < topNode.GetComponent<node>().neighbers.Length; i++)
+                for (int i = 0; i < top.GetComponent<node>().neighbers.Length; i++)
                 {
-                    if (topNode.GetComponent<node>().neighbers[i].visited == false)
+                    if (top.GetComponent<node>().neighbers[i].visited == false)
                     {
-                        dfs.Add(topNode.GetComponent<node>().neighbers[i].gameObject);
+                        top.GetComponent<node>().neighbers[i].parent = top;
+                        bfs.Enqueue(top.GetComponent<node>().neighbers[i].gameObject);
                     }
                 }
 
-                //didn't add any
-                if (dfs[dfs.Count - 1] == topNode)
-                {
-                    dfs.RemoveAt(dfs.Count - 1);
-                }
-
-        }
-
-        for(int i = 0; i < dfs.Count; i++)
-        {
-            if(dfs[i].GetComponent<node>().visited)
-            {
-                dfs[i].GetComponent<MeshRenderer>().enabled = true;
-                path.Add(dfs[i]);
             }
+
+            //trace back the path and turn on the node mesh
+            while (top != null)
+            {
+                top.GetComponent<MeshRenderer>().enabled = true;
+                path.Add(top);
+                top = top.GetComponent<node>().parent;
+            }
+
         }
 
         //reset the nodes
-        resetVisited();
+        resetNodes();
     }
 
-    void resetVisited()
+    void resetNodes()
     {
         for(int i = 0; i < graph.Length; i++)
         {
             graph[i].visited = false;
+            graph[i].parent = null;
         }
     }
 
