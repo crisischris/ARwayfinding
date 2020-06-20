@@ -20,8 +20,6 @@ public class buttonClick : MonoBehaviour
     public bool lerpUIUp;
     public bool lerpUIDown;
 
-
-
     private Vector2 upStartPos;
     private Button up;
 
